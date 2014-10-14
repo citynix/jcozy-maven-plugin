@@ -1,0 +1,67 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.citynix.tools</groupId>
+	<artifactId>db-maven-plugin</artifactId>
+	<version>1.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
+	<name>Test Load Data</name>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>9.1-901-1.jdbc4</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.7</version>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+
+			<plugin>
+				<artifactId>db-maven-plugin</artifactId>
+
+				<!-- <dependencies> -->
+				<!-- <dependency> -->
+				<!-- <groupId>org.postgresql</groupId> -->
+				<!-- <artifactId>postgresql</artifactId> -->
+				<!-- <version>9.3-1102-jdbc41</version> -->
+				<!-- </dependency> -->
+				<!-- </dependencies> -->
+
+				<configuration>
+					<driver>org.postgresql.Driver</driver>
+					<url>jdbc:postgresql://localhost/my_test_db</url>
+					<username>postgres</username>
+					<password>postgres</password>
+					<!-- <type>REFRESH</type> -->
+					<src>file.xml</src>
+					<format>flat</format>
+					<!-- <dest>exported.xml</dest> -->
+					<!-- <transaction>true</transaction> -->
+					<datatypeWarning>true</datatypeWarning>
+					<schema-files>
+						<file>src/test/resources/schema.xml</file>
+					</schema-files>
+					<data-files>
+						<file>src/test/resources/author_data.xml</file>
+						<file>src/test/resources/book_data.xml</file>
+					</data-files>
+
+					<mavenProject implementation="org.apache.maven.project.MavenProject" />
+				</configuration>
+			</plugin>
+
+		</plugins>
+	</build>
+</project>

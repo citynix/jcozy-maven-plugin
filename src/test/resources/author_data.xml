@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<dataset>
+	<author author_id="1" name="John Smith" organisation="ACME" />
+	<author author_id="2" name="Mary" organisation="ACME 1" />
+</dataset>
