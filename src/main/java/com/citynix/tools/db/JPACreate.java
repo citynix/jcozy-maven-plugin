@@ -10,12 +10,8 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.openejb.core.ParentClassLoaderFinder;
-import org.apache.openjpa.meta.MetaDataRepository;
-import org.codehaus.plexus.classworlds.realm.ClassRealm;
 import org.codehaus.plexus.classworlds.realm.DuplicateRealmException;
 
-import com.citynix.tools.db.internal.OpenEJBProcess;
 import com.citynix.tools.db.internal.OpenEJBProcessRunner;
 
 /***
@@ -44,7 +40,11 @@ public class JPACreate extends CommonConfigurationMojo {
 
 	    runner.setJavaAgentPath(javaAgent);
 
+	    getLog().info("Executing create tables ");
+
 	    runner.exec(driver, url, username, password);
+
+	    getLog().info("Completed create tables ");
 
 	} catch (MalformedURLException e)
 	{
@@ -57,33 +57,14 @@ public class JPACreate extends CommonConfigurationMojo {
 	    e.printStackTrace();
 	} catch (UnsupportedEncodingException e)
 	{
-	    // TODO Auto-generated catch block
 	    e.printStackTrace();
 	} catch (IOException e)
 	{
-	    // TODO Auto-generated catch block
 	    e.printStackTrace();
 	} catch (InterruptedException e)
 	{
-	    // TODO Auto-generated catch block
 	    e.printStackTrace();
 	}
-
-	// TablesCreator creator;
-
-	// creator = new OpenEjbTablesCreator();
-
-	// creator = new OpenJPATablesCreator();
-
-	// creator.setDataBaseCredentials(driver, url, username, password);
-
-	getLog().info("Executing create tables ");
-
-	// creator.create();
-
-	getLog().info("Completed create tables ");
-
-	System.out.println(mavenProject);
 
     }
 

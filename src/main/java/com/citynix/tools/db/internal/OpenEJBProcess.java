@@ -13,9 +13,6 @@ public class OpenEJBProcess {
     public static void main(String[] args) throws ClassNotFoundException
     {
 
-	System.setOut(System.out);
-	System.setErr(System.out);
-	
 	Properties properties = new Properties();
 
 	properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.openejb.client.LocalInitialContextFactory");

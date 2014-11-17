@@ -51,7 +51,7 @@ public class OpenEJBProcessRunner {
 	// commandBuilder.append(" -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005 ");
 
 	commandBuilder.append(" -javaagent:" + this.javaAgentPath.trim() + " ");
-	
+
 	commandBuilder.append(className);
 
 	String command = commandBuilder.toString();
@@ -69,6 +69,7 @@ public class OpenEJBProcessRunner {
 	}
 
 	process.waitFor();
+
 	int exitStatus = process.exitValue();
 
 	return exitStatus;
