@@ -3,12 +3,14 @@ package com.citynix.tools.db;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -18,6 +20,7 @@ import org.dbunit.database.IDatabaseConnection;
 import org.dbunit.dataset.xml.FlatXmlDataSet;
 import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
 import org.dbunit.operation.DatabaseOperation;
+
 //import org.dbunit.ant.Operation;
 
 /***
@@ -59,7 +62,8 @@ public class ImportData extends CommonConfigurationMojo {
 
 	try
 	{
-	    super.setupClassPath();
+
+	    super.setupClassLoader();
 
 	    connection = createConnection();
 

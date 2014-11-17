@@ -1,19 +1,27 @@
 package com.citynix.tools.db;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.classworlds.realm.ClassRealm;
+import org.codehaus.plexus.classworlds.realm.DuplicateRealmException;
 
 abstract class CommonConfigurationMojo extends AbstractMojo {
 
@@ -41,8 +49,11 @@ abstract class CommonConfigurationMojo extends AbstractMojo {
     @Parameter(readonly = true, required = false, property = "schema-files")
     private List<File> schemaFiles = new LinkedList<File>();
 
-    @Component
+    @Parameter(property = "project")
     protected MavenProject mavenProject;
+
+    @Parameter(property = "descriptor")
+    private PluginDescriptor descriptor;
 
     protected final List<File> fileNamesToList(List<String> fileNames)
     {
@@ -71,68 +82,123 @@ abstract class CommonConfigurationMojo extends AbstractMojo {
 	return this.schemaFiles;
     }
 
-    private ClassLoader classLoader;
+    // private ClassLoader classLoader;
 
-    protected void setupClassPath() throws MalformedURLException, DependencyResolutionRequiredException
+    protected URL[] setupClassLoader() throws MalformedURLException, DependencyResolutionRequiredException, DuplicateRealmException,
+	    UnsupportedEncodingException, MojoFailureException
     {
 
-	// synchronized (this)
-	// {
-	// if (classLoader != null)
-	// return;
-	// }
-	// synchronized (this)
-	// {
-	List<URL> urls = new ArrayList<URL>();
+	getLog().debug("Scanning classpath ... ");
 
-	List<String> paths = new LinkedList<String>();
+	String packaging = this.mavenProject.getPackaging();
+
+	if (!packaging.equals("bundle"))
+	{
+	    throw new MojoFailureException("Packaging must be bundle");
+	}
+
+	URL urls[] = this.getClassPathURLs();
+	List<URL> allURLs = new ArrayList<URL>();
+
+	for (URL url : urls)
+	{
+	    getLog().debug("Adding " + url + " to project classpath");
+	    allURLs.add(url);
+	}
+
+	// Adding plugin URL to both class path
+	URL pluginURL = this.currentJarURL();
+	allURLs.add(pluginURL);
+
+	URL[] array = allURLs.toArray(new URL[allURLs.size()]);
+
+	// ClassLoader cl = new URLClassLoader(array,
+	// Thread.currentThread().getContextClassLoader());
+	//
+	// Thread.currentThread().setContextClassLoader(cl);
+
+	return array;
+
+    }
+
+    private URL currentJarURL()
+    {
+	String plugingJarPath = CommonConfigurationMojo.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+	String decodedPath;
+	try
+	{
+	    decodedPath = URLDecoder.decode(plugingJarPath, "UTF-8");
+	    URL pluginURL = (new File(decodedPath)).toURI().toURL();
+	    return pluginURL;
+
+	} catch (UnsupportedEncodingException e)
+	{
+	    e.printStackTrace();
+	} catch (MalformedURLException e)
+	{
+	    e.printStackTrace();
+	}
+	return null;
+    }
+
+    private URL[] getClassPathURLs() throws DependencyResolutionRequiredException, MalformedURLException, UnsupportedEncodingException
+    {
+	List<URL> paths = new ArrayList<URL>();
 
 	List<String> compilePath = mavenProject.getCompileClasspathElements();
-
-	List<String> testPath = mavenProject.getTestClasspathElements();
 
 	List<String> runtimePath = mavenProject.getRuntimeClasspathElements();
 
 	List<String> systemPath = mavenProject.getSystemClasspathElements();
 
-	List<Dependency> dependencies = mavenProject.getCompileDependencies();
-
 	this.merge(paths, compilePath);
-	this.merge(paths, testPath);
 	this.merge(paths, runtimePath);
 	this.merge(paths, systemPath);
 
-	getLog().info("Scanning ... ");
+	URL[] a = new URL[paths.size()];
 
-	for (Object object : paths)
-	{
-	    String path = (String) object;
-
-	    getLog().info("Adding " + path + " to classpath");
-
-	    urls.add(new File(path).toURL());
-	}
-
-	ClassLoader parent = Thread.currentThread().getContextClassLoader();
-
-	parent = this.getClass().getClassLoader();
-
-	URL[] a = urls.toArray(new URL[urls.size()]);
-	ClassLoader contextClassLoader = URLClassLoader.newInstance(a, parent);
-
-	Thread.currentThread().setContextClassLoader(contextClassLoader);
-
-	return;
-	// }
+	return paths.toArray(a);
     }
 
-    private void merge(List<String> original, List<String> additional)
+    private void merge(List<URL> original, List<String> additional)
     {
 	for (String s : additional)
 	{
-	    if (!original.contains(s))
-		original.add(s);
+	    try
+	    {
+		File f = new File(s);
+		URL tmp = f.toURI().toURL();
+
+		// if (!s.contains("openejb"))
+		if (!original.contains(tmp))
+		    original.add(tmp);
+
+	    } catch (MalformedURLException e)
+	    {
+		e.printStackTrace();
+	    }
 	}
     }
 
+    protected final String getOpenJPA_javaagent_path()
+    {
+	String openjpaId = "org.apache.openejb.patch";
+	String openjpaGroupId = "openjpa";
+
+	List<Artifact> artifacts = new LinkedList<Artifact>();
+
+	artifacts.addAll(this.mavenProject.getRuntimeArtifacts());
+	artifacts.addAll(this.mavenProject.getCompileArtifacts());
+
+	for (Artifact artifact : artifacts)
+	{
+	    String aId = artifact.getArtifactId();
+	    String gId = artifact.getGroupId();
+
+	    if (openjpaGroupId.equals(aId) && openjpaId.equals(gId))
+		return artifact.getFile().getAbsolutePath();
+	}
+
+	return null;
+    }
 }

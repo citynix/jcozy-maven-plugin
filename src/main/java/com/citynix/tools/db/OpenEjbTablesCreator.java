@@ -2,14 +2,15 @@ package com.citynix.tools.db;
 
 import java.util.Properties;
 
-import javax.ejb.embeddable.EJBContainer;
+import javax.naming.Binding;
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
-import com.citynix.tools.db.internal.EJBTestLocal;
+import com.citynix.tools.db.internal.EJBTestBean;
 
 class OpenEjbTablesCreator implements TablesCreator {
 
@@ -29,11 +30,13 @@ class OpenEjbTablesCreator implements TablesCreator {
     @Override
     public void create()
     {
+
 	Properties properties = new Properties();
 
 	properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.openejb.client.LocalInitialContextFactory");
 
 	// properties.put(OpenEjbContainer.OPENEJB_EMBEDDED_REMOTABLE, "true");
+
 	properties.put("openejb.validation.output.level", "VERBOSE");
 
 	properties.put("jdbc/dataSource", "new://Resource?type=DataSource");
@@ -45,12 +48,30 @@ class OpenEjbTablesCreator implements TablesCreator {
 	properties.setProperty("javax.persistence.transactionType", "RESOURCE_LOCAL");
 
 	Context ctx;
+
 	try
 	{
-	     org.apache.openejb.core.LocalInitialContextFactory f;
 	    ctx = new InitialContext(properties);
 
-	    EJBTestLocal ejbTestLocal = (EJBTestLocal) ctx.lookup("EJBTestBeanLocal");
+	    JNDITree printer = new JNDITree(ctx);
+
+	    System.out.println("Printing tree");
+
+	    printer.printJNDITree("");
+
+	    NamingEnumeration<Binding> list = ctx.listBindings("java:openejb/");
+
+	    while (list.hasMore())
+	    {
+		Binding item = list.next();
+		System.out.println(item.getClassName() + " :: " + "java:openejb/" + item.getName());
+	    }
+
+	    Object obj = ctx.lookup("EJBTestLocalLocal");
+
+	    System.out.println("Found object type: " + obj.getClass());
+
+	    EJBTestBean ejbTestLocal = (EJBTestBean) obj;
 
 	    EntityManager entityManager = null;
 
@@ -59,6 +80,7 @@ class OpenEjbTablesCreator implements TablesCreator {
 	    entityManagerFactory = ejbTestLocal.getEntityManagerFactory();
 
 	    entityManager = entityManagerFactory.createEntityManager();
+
 	    entityManager.close();
 
 	} catch (NamingException e)

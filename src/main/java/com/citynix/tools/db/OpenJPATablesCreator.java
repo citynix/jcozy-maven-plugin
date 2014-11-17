@@ -29,18 +29,19 @@ class OpenJPATablesCreator implements TablesCreator {
 
 	props.setProperty("openjpa.Log", "DefaultLevel=TRACE, Tool=TRACE, Runtime=TRACE, SQL=TRACE");
 	props.setProperty("openjpa.ConnectionFactoryProperties", "PrintParameters=true, PrettyPrint=true, PrettyPrintLineLength=80");
-	props.put("openjpa.RuntimeUnenhancedClasses", " supported");
+	 props.put("openjpa.RuntimeUnenhancedClasses", " supported");
 
 	props.setProperty("javax.persistence.jdbc.driver", this.driver);
 	props.setProperty("javax.persistence.jdbc.url", this.url);
 	props.setProperty("javax.persistence.jdbc.user", this.username);
 	props.setProperty("javax.persistence.jdbc.password", this.password);
 
-	props.setProperty("javax.persistence.transactionType", PersistenceUnitTransactionType.RESOURCE_LOCAL.name());
+//	props.setProperty("javax.persistence.transactionType", PersistenceUnitTransactionType.RESOURCE_LOCAL.name());
+	 org.apache.xerces.impl.xs.XMLSchemaLoader h ;
+	 
+	EntityManagerFactory emf = Persistence.createEntityManagerFactory("jcozy.pu", props);
 
-	EntityManagerFactory emf = Persistence.createEntityManagerFactory(null, props);
-
-	EntityManager em = emf.createEntityManager(props);
+	EntityManager em = emf.createEntityManager();
 
 	boolean open = em.isOpen();
 
