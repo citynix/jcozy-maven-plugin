@@ -112,15 +112,13 @@ abstract class CommonConfigurationMojo extends AbstractMojo {
 
 	URL[] array = allURLs.toArray(new URL[allURLs.size()]);
 
-	// ClassLoader cl = new URLClassLoader(array,
-	// Thread.currentThread().getContextClassLoader());
-	//
-	// Thread.currentThread().setContextClassLoader(cl);
-
 	return array;
 
     }
 
+    /*
+     * This is needed for OpenEJB and OpenJPA jars
+     */
     private URL currentJarURL()
     {
 	String plugingJarPath = CommonConfigurationMojo.class.getProtectionDomain().getCodeSource().getLocation().getPath();
@@ -147,13 +145,18 @@ abstract class CommonConfigurationMojo extends AbstractMojo {
 
 	List<String> compilePath = mavenProject.getCompileClasspathElements();
 
-	List<String> runtimePath = mavenProject.getRuntimeClasspathElements();
-
-	List<String> systemPath = mavenProject.getSystemClasspathElements();
+	// List<String> runtimePath =
+	// mavenProject.getRuntimeClasspathElements();
+	//
+	// List<String> systemPath = mavenProject.getSystemClasspathElements();
 
 	this.merge(paths, compilePath);
-	this.merge(paths, runtimePath);
-	this.merge(paths, systemPath);
+	// this.merge(paths, runtimePath);
+	// this.merge(paths, systemPath);
+
+	String src = this.mavenProject.getBuild().getSourceDirectory();
+
+	paths.add((new File(src)).toURL());
 
 	URL[] a = new URL[paths.size()];
 

@@ -2,11 +2,16 @@ package com.citynix.tools.db.internal;
 
 import java.util.Properties;
 
+import javax.naming.Binding;
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NameClassPair;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.transaction.TransactionManager;
+import javax.persistence.spi.PersistenceUnitTransactionType;
+
+import org.apache.openejb.assembler.classic.ReloadableEntityManagerFactory;
 
 public class OpenEJBProcess {
 
@@ -26,12 +31,11 @@ public class OpenEJBProcess {
 
 	properties.put("jdbc/dataSource", "new://Resource?type=DataSource");
 	properties.put("jdbc/dataSource.JdbcDriver", driver.trim());
-	properties.put("jdbc/dataSource.JdbcUrl", url);
-	properties.put("jdbc/dataSource.UserName", username);
-	properties.put("jdbc/dataSource.Password", password);
+	properties.put("jdbc/dataSource.JdbcUrl", url.trim());
+	properties.put("jdbc/dataSource.UserName", username.trim());
+	properties.put("jdbc/dataSource.Password", password.trim());
 
-	// properties.setProperty("javax.persistence.transactionType",
-	// "RESOURCE_LOCAL");
+	properties.setProperty("javax.persistence.transactionType", "RESOURCE_LOCAL");
 
 	properties.put("openjpa.RuntimeUnenhancedClasses", "supported");
 
@@ -43,51 +47,53 @@ public class OpenEJBProcess {
 
 	try
 	{
+
 	    ctx = new InitialContext(properties);
 
-	    EJBTestBean ejbTestLocal;
+	    // printContext(ctx, "java:openejb");
+	    // printContext(ctx, "java:openejb/PersistenceUnit");
 
-	    EntityManager entityManager = null;
+	    Context puc = (Context) ctx.lookup("java:openejb/PersistenceUnit");
 
-	    Object obj;
+	    ReloadableEntityManagerFactory factory = null;
 
-	    obj = ctx.lookup("PersistenceAccessor_ManagedLocal");
+	    NamingEnumeration<Binding> tmp = puc.listBindings("");
 
-	    ejbTestLocal = (EJBTestBean) obj;
+	    factory = (ReloadableEntityManagerFactory) tmp.next().getObject();
 
-	    entityManager = ejbTestLocal.getEntityManager();
+	    EntityManager entityManager = factory.createEntityManager();
 
-	    if (entityManager != null)
-	    {
-		// System.out.println("Found managed: " + obj.getClass());
+	    EntityManager delegate = (EntityManager) entityManager.getDelegate();
 
-		Object o2 = ctx.lookup("java:openejb/TransactionManager");
+	    entityManager = delegate;
 
-		TransactionManager txMgr = (TransactionManager) o2;
+	    PersistenceUnitTransactionType txType = factory.info().getTransactionType();
 
-		txMgr.begin();
-		entityManager.flush();
-		txMgr.commit();
+	    String puName = factory.info().getPersistenceUnitName();
 
-	    } else
-	    {
-		obj = ctx.lookup("PersistenceAccessor_UnManagedLocal");
+	    System.out.println("Found " + txType + " for persistence unit " + puName);
 
-		ejbTestLocal = (EJBTestBean) obj;
-
-		EntityManagerFactory entityManagerFactory = ejbTestLocal.getEntityManagerFactory();
-
-		// System.out.println("Found UnManaged : " + obj.getClass());
-
-		entityManager = entityManagerFactory.createEntityManager();
-
-		entityManager.close();
-	    }
+	    entityManager.getTransaction().begin();
+	    entityManager.flush();
+	    entityManager.getTransaction().commit();
+	    entityManager.close();
 
 	} catch (Exception e)
 	{
 	    e.printStackTrace(System.out);
 	}
+    }
+
+    private static void printContext(Context ctx, String name) throws NamingException
+    {
+	System.out.println("Printing context " + name);
+	NamingEnumeration<NameClassPair> list = ctx.list(name);
+	while (list.hasMore())
+	{
+	    NameClassPair pair = list.next();
+	    System.out.println(pair.getClassName() + "-->" + pair.getName());
+	}
+
     }
 
 }

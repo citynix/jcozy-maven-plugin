@@ -56,6 +56,8 @@ public class OpenEJBProcessRunner {
 
 	String command = commandBuilder.toString();
 
+	// System.out.println(command);
+
 	Process process = Runtime.getRuntime().exec(command);
 
 	InputStream is = process.getInputStream();
