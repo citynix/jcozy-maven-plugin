@@ -17,7 +17,6 @@ public class OpenEJBProcess {
 
     public static void main(String[] args) throws ClassNotFoundException
     {
-
 	Properties properties = new Properties();
 
 	properties.put(Context.INITIAL_CONTEXT_FACTORY, "org.apache.openejb.client.LocalInitialContextFactory");
@@ -42,6 +41,15 @@ public class OpenEJBProcess {
 	properties.put("openjpa.Log", "File=org.apache.openjpa.log, DefaultLevel=TRACE, Tool=TRACE, Runtime=TRACE, SQL=TRACE");
 	properties.put("openjpa.ConnectionFactoryProperties", "PrintParameters=true, PrettyPrint=true, PrettyPrintLineLength=80");
 	// properties.put("openjpa.TransactionMode", "local");
+
+	// properties.put("openejb.exclude-include.order", "include-exclude");
+
+	properties.put("openejb.exclude-include.order", "exclude-include");
+	properties.put("openejb.deployments.classpath.include", "");
+	properties.put("openejb.deployments.classpath.exclude", ".*");
+	properties.put("openejb.deployments.classpath ", false);
+	properties.put("openejb.deployments.classpath.filter.descriptors", true);
+	properties.put("openejb.additional.exclude", "classpath.ear");
 
 	Context ctx;
 
